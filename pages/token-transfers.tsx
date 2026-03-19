@@ -4,7 +4,15 @@ import React from 'react';
 
 import PageNextJs from 'nextjs/PageNextJs';
 
-const TokenTransfers = dynamic(() => import('ui/pages/TokenTransfers'), { ssr: false });
+import config from 'configs/app';
+
+const TokenTransfers = dynamic(() => {
+  if (config.features.multichain.isEnabled) {
+    return import('ui/multichain/tokenTransfers/MultichainTokenTransfers');
+  }
+
+  return import('ui/pages/TokenTransfers');
+}, { ssr: false });
 
 const Page: NextPage = () => {
   return (
@@ -16,4 +24,4 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export { base as getServerSideProps } from 'nextjs/getServerSideProps';
+export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';

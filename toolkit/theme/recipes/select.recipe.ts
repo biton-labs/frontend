@@ -1,7 +1,21 @@
 import { defineSlotRecipe } from '@chakra-ui/react';
 
 export const recipe = defineSlotRecipe({
-  slots: [ 'root', 'trigger', 'indicatorGroup', 'indicator', 'content', 'item', 'control', 'itemText', 'itemGroup', 'itemGroupLabel', 'label', 'valueText' ],
+  slots: [
+    'root',
+    'trigger',
+    'indicatorGroup',
+    'indicator',
+    'content',
+    'item',
+    'control',
+    'itemText',
+    'itemGroup',
+    'itemGroupLabel',
+    'label',
+    'valueText',
+    'positioner',
+  ],
   base: {
     root: {
       display: 'flex',
@@ -20,7 +34,7 @@ export const recipe = defineSlotRecipe({
       borderRadius: 'base',
       userSelect: 'none',
       textAlign: 'start',
-      fontWeight: 'semibold',
+      fontWeight: 'medium',
       cursor: 'pointer',
       focusVisibleRing: 'none',
       _disabled: {
@@ -50,14 +64,16 @@ export const recipe = defineSlotRecipe({
       boxSize: '5',
       color: 'inherit',
       _open: {
-        color: 'link.primary.hover',
+        color: 'hover',
       },
     },
     content: {
       background: 'popover.bg',
       display: 'flex',
       flexDirection: 'column',
-      zIndex: 'popover',
+      // For selects inside modals
+      '--select-z-index': 'modal',
+      zIndex: 'modal',
       borderRadius: 'md',
       borderWidth: '0',
       outline: 0,
@@ -92,7 +108,7 @@ export const recipe = defineSlotRecipe({
         opacity: 'control.disabled',
       },
       _highlighted: {
-        bg: 'select.item.bg.highlighted',
+        bg: 'selected.control.bg',
       },
     },
     control: {
@@ -134,11 +150,11 @@ export const recipe = defineSlotRecipe({
           color: 'select.trigger.outline.fg',
           borderColor: 'input.border.filled',
           _expanded: {
-            color: 'link.primary.hover',
-            borderColor: 'link.primary.hover',
+            color: 'hover',
+            borderColor: 'hover',
             _hover: {
-              color: 'link.primary.hover',
-              borderColor: 'link.primary.hover',
+              color: 'hover',
+              borderColor: 'hover',
             },
           },
           _hover: {
@@ -167,11 +183,11 @@ export const recipe = defineSlotRecipe({
               borderColor: 'input.border.error',
             },
             _expanded: {
-              color: 'link.primary.hover',
-              borderColor: 'link.primary.hover',
+              color: 'hover',
+              borderColor: 'hover',
               _hover: {
-                color: 'link.primary.hover',
-                borderColor: 'link.primary.hover',
+                color: 'hover',
+                borderColor: 'hover',
               },
             },
           },

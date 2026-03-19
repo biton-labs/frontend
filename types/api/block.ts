@@ -23,15 +23,15 @@ export interface Block {
   transactions_count: number;
   internal_transactions_count: number;
   miner: AddressParam;
-  size: number;
+  size?: number;
   hash: string;
   parent_hash: string;
-  difficulty: string;
-  total_difficulty: string | null;
+  difficulty?: string;
+  total_difficulty?: string | null;
   gas_used: string | null;
   gas_limit: string;
   nonce: string;
-  base_fee_per_gas: string | null;
+  base_fee_per_gas?: string | null;
   burnt_fees: string | null;
   priority_fee: string | null;
   extra_data: string | null;
@@ -44,6 +44,8 @@ export interface Block {
   transaction_fees: string | null;
   uncles_hashes: Array<string>;
   withdrawals_count?: number;
+  beacon_deposits_count?: number;
+  is_pending_update?: boolean;
   // ROOTSTOCK FIELDS
   bitcoin_merged_mining_coinbase_transaction?: string | null;
   bitcoin_merged_mining_header?: string | null;
@@ -55,7 +57,7 @@ export interface Block {
   blob_gas_used?: string;
   burnt_blob_fees?: string;
   excess_blob_gas?: string;
-  blob_transaction_count?: number;
+  blob_transactions_count?: number;
   // ZKSYNC FIELDS
   zksync?: Omit<ZkSyncBatchesItem, 'number' | 'transactions_count' | 'timestamp'> & {
     batch_number: number | null;
@@ -78,7 +80,7 @@ type ArbitrumBlockData = {
   confirmation_transaction: ArbitrumL2TxData;
   delayed_messages: number;
   l1_block_number: number;
-  send_count: number;
+  send_count: number | null;
   send_root: string;
   status: ArbitrumBatchStatus;
 };

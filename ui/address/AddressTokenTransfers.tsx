@@ -1,261 +1,181 @@
-import { Box, Flex } from '@chakra-ui/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { HStack } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import React from 'react';
 
-import type { SocketMessage } from 'lib/socket/types';
-import { AddressFromToFilterValues } from 'types/api/address';
-import type { AddressFromToFilter, AddressTokenTransferResponse } from 'types/api/address';
-import type { TokenType } from 'types/api/token';
-import type { TokenTransfer } from 'types/api/tokenTransfer';
-
-import { getResourceKey } from 'lib/api/useApiQuery';
-import getFilterValueFromQuery from 'lib/getFilterValueFromQuery';
-import getFilterValuesFromQuery from 'lib/getFilterValuesFromQuery';
+import config from 'configs/app';
+import useIsMobile from 'lib/hooks/useIsMobile';
 import useIsMounted from 'lib/hooks/useIsMounted';
 import getQueryParamString from 'lib/router/getQueryParamString';
-import useSocketChannel from 'lib/socket/useSocketChannel';
-import useSocketMessage from 'lib/socket/useSocketMessage';
-import { TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
-import { getTokenTransfersStub } from 'stubs/token';
-import { apos } from 'toolkit/utils/htmlEntities';
+import { INTERCHAIN_TRANSFER } from 'stubs/interchainIndexer';
+import { generateListStub } from 'stubs/utils';
+import RoutedTabs from 'toolkit/components/RoutedTabs/RoutedTabs';
+import TokenTransfersCrossChainContent from 'ui/crossChain/transfers/TokenTransfersCrossChainContent';
 import ActionBar, { ACTION_BAR_HEIGHT_DESKTOP } from 'ui/shared/ActionBar';
-import DataListDisplay from 'ui/shared/DataListDisplay';
 import Pagination from 'ui/shared/pagination/Pagination';
 import useQueryWithPages from 'ui/shared/pagination/useQueryWithPages';
-import * as SocketNewItemsNotice from 'ui/shared/SocketNewItemsNotice';
 import TokenTransferFilter from 'ui/shared/TokenTransfer/TokenTransferFilter';
-import TokenTransferList from 'ui/shared/TokenTransfer/TokenTransferList';
-import TokenTransferTable from 'ui/shared/TokenTransfer/TokenTransferTable';
 
 import AddressAdvancedFilterLink from './AddressAdvancedFilterLink';
 import AddressCsvExportLink from './AddressCsvExportLink';
+import AddressTokenTransfersLocal from './AddressTokenTransfersLocal';
+import useAddressTokenTransfersQuery from './useAddressTokenTransfersQuery';
 
-type Filters = {
-  type: Array<TokenType>;
-  filter: AddressFromToFilter | undefined;
+export const ADDRESS_TOKEN_TRANSFERS_TAB_IDS = [ 'token_transfers_local' as const, 'token_transfers_cross_chain' as const ];
+const TAB_LIST_PROPS = {
+  marginBottom: 0,
+  pt: 6,
+  pb: 3,
+  marginTop: -6,
 };
 
-const getTokenFilterValue = (getFilterValuesFromQuery<TokenType>).bind(null, TOKEN_TYPE_IDS);
-const getAddressFilterValue = (getFilterValueFromQuery<AddressFromToFilter>).bind(null, AddressFromToFilterValues);
-
-const OVERLOAD_COUNT = 75;
-
-const matchFilters = (filters: Filters, tokenTransfer: TokenTransfer, address?: string) => {
-  if (filters.filter) {
-    if (filters.filter === 'from' && tokenTransfer.from.hash !== address) {
-      return false;
-    }
-    if (filters.filter === 'to' && tokenTransfer.to.hash !== address) {
-      return false;
-    }
-  }
-  if (filters.type && filters.type.length) {
-    if (!tokenTransfer.token || !filters.type.includes(tokenTransfer.token.type)) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-type Props = {
+interface Props {
   shouldRender?: boolean;
   isQueryEnabled?: boolean;
   // for tests only
   overloadCount?: number;
-};
+}
 
-const AddressTokenTransfers = ({ overloadCount = OVERLOAD_COUNT, shouldRender = true, isQueryEnabled = true }: Props) => {
+const AddressTokenTransfers = ({ shouldRender = true, overloadCount, isQueryEnabled = true }: Props) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const isMounted = useIsMounted();
+  const isMobile = useIsMobile();
+  const hash = getQueryParamString(router.query.hash);
+  const tab = getQueryParamString(router.query.tab) as typeof ADDRESS_TOKEN_TRANSFERS_TAB_IDS[number] | 'token_transfers' | undefined;
 
-  const currentAddress = getQueryParamString(router.query.hash);
+  const isLocalTab = tab === 'token_transfers_local' || tab === 'token_transfers';
 
-  const [ showSocketAlert, setShowSocketAlert ] = React.useState(false);
-  const [ newItemsCount, setNewItemsCount ] = React.useState(0);
+  const localQuery = useAddressTokenTransfersQuery({
+    currentAddress: hash,
+    enabled: isQueryEnabled && isLocalTab,
+  });
 
-  const [ filters, setFilters ] = React.useState<Filters>(
-    {
-      type: getTokenFilterValue(router.query.type) || [],
-      filter: getAddressFilterValue(router.query.filter),
-    },
-  );
-
-  const { isError, isPlaceholderData, data, pagination, onFilterChange } = useQueryWithPages({
-    resourceName: 'general:address_token_transfers',
-    pathParams: { hash: currentAddress },
-    filters,
+  const crossChainQuery = useQueryWithPages({
+    resourceName: 'interchainIndexer:address_transfers',
+    pathParams: { hash },
     options: {
-      enabled: isQueryEnabled,
-      placeholderData: getTokenTransfersStub(undefined, {
-        block_number: 7793535,
-        index: 46,
-        items_count: 50,
-      }),
+      placeholderData: generateListStub<'interchainIndexer:address_transfers'>(INTERCHAIN_TRANSFER, 50, { next_page_params: undefined }),
+      enabled: isQueryEnabled && !isLocalTab,
     },
   });
 
-  const handleTypeFilterChange = React.useCallback((nextValue: Array<TokenType>) => {
-    onFilterChange({ ...filters, type: nextValue });
-    setFilters((prevState) => ({ ...prevState, type: nextValue }));
-  }, [ filters, onFilterChange ]);
-
-  const handleAddressFilterChange = React.useCallback((nextValue: string) => {
-    const filterVal = getAddressFilterValue(nextValue);
-    onFilterChange({ ...filters, filter: filterVal });
-    setFilters((prevState) => ({ ...prevState, filter: filterVal }));
-  }, [ filters, onFilterChange ]);
-
-  const handleNewSocketMessage: SocketMessage.AddressTokenTransfer['handler'] = (payload) => {
-    setShowSocketAlert(false);
-
-    const newItems: Array<TokenTransfer> = [];
-    let newCount = 0;
-
-    payload.token_transfers.forEach(transfer => {
-      if (data?.items && data.items.length + newItems.length >= overloadCount) {
-        if (matchFilters(filters, transfer, currentAddress)) {
-          newCount++;
-        }
-      } else {
-        if (matchFilters(filters, transfer, currentAddress)) {
-          newItems.push(transfer);
-        }
-      }
-    });
-
-    if (newCount > 0) {
-      setNewItemsCount(prev => prev + newCount);
+  const handleTabValueChange = React.useCallback(({ value }: { value: string }) => {
+    if (value === 'token_transfers_local') {
+      localQuery.setFilters({ type: [], filter: undefined });
     }
-
-    if (newItems.length > 0) {
-      queryClient.setQueryData(
-        getResourceKey('general:address_token_transfers', { pathParams: { hash: currentAddress }, queryParams: { ...filters } }),
-        (prevData: AddressTokenTransferResponse | undefined) => {
-          if (!prevData) {
-            return;
-          }
-
-          return {
-            ...prevData,
-            items: [
-              ...newItems,
-              ...prevData.items,
-            ],
-          };
-        },
-      );
-    }
-
-  };
-
-  const handleSocketClose = React.useCallback(() => {
-    setShowSocketAlert(true);
-  }, []);
-
-  const handleSocketError = React.useCallback(() => {
-    setShowSocketAlert(true);
-  }, []);
-
-  const channel = useSocketChannel({
-    topic: `addresses:${ currentAddress.toLowerCase() }`,
-    onSocketClose: handleSocketClose,
-    onSocketError: handleSocketError,
-    isDisabled: pagination.page !== 1,
-  });
-
-  useSocketMessage({
-    channel,
-    event: 'token_transfer',
-    handler: handleNewSocketMessage,
-  });
+  }, [ localQuery ]);
 
   if (!isMounted || !shouldRender) {
     return null;
   }
 
-  const numActiveFilters = (filters.type?.length || 0) + (filters.filter ? 1 : 0);
-  const isActionBarHidden = !numActiveFilters && !data?.items.length && !currentAddress;
-
-  const content = data?.items ? (
-    <>
-      <Box hideBelow="lg">
-        <TokenTransferTable
-          data={ data?.items }
-          baseAddress={ currentAddress }
-          showTxInfo
-          top={ isActionBarHidden ? 0 : ACTION_BAR_HEIGHT_DESKTOP }
-          enableTimeIncrement
-          showSocketInfo={ pagination.page === 1 }
-          showSocketErrorAlert={ showSocketAlert }
-          socketInfoNum={ newItemsCount }
-          isLoading={ isPlaceholderData }
+  const tabs = [
+    {
+      id: [ 'token_transfers_local', 'token_transfers' ],
+      title: 'Transfers',
+      component: (
+        <AddressTokenTransfersLocal
+          query={ localQuery.query }
+          filters={ localQuery.filters }
+          onTypeFilterChange={ localQuery.onTypeFilterChange }
+          onAddressFilterChange={ localQuery.onAddressFilterChange }
+          addressHash={ hash }
+          overloadCount={ overloadCount }
         />
-      </Box>
-      <Box hideFrom="lg">
-        { pagination.page === 1 && (
-          <SocketNewItemsNotice.Mobile
-            num={ newItemsCount }
-            showErrorAlert={ showSocketAlert }
-            type="token_transfer"
-            isLoading={ isPlaceholderData }
+      ),
+    },
+    config.features.crossChainTxs.isEnabled && {
+      id: 'token_transfers_cross_chain',
+      title: 'Cross-chain transfers',
+      component: (
+        <>
+          { isMobile && crossChainQuery.pagination.isVisible && (
+            <ActionBar>
+              <Pagination ml="auto" { ...crossChainQuery.pagination }/>
+            </ActionBar>
+          ) }
+          <TokenTransfersCrossChainContent
+            items={ crossChainQuery.data?.items }
+            isLoading={ crossChainQuery.isPlaceholderData }
+            isError={ crossChainQuery.isError }
+            pagination={ crossChainQuery.pagination }
+            tableTop={ ACTION_BAR_HEIGHT_DESKTOP }
+            currentAddress={ hash }
           />
-        ) }
-        <TokenTransferList
-          data={ data?.items }
-          baseAddress={ currentAddress }
-          showTxInfo
-          enableTimeIncrement
-          isLoading={ isPlaceholderData }
-        />
-      </Box>
-    </>
-  ) : null;
+        </>
+      ),
+    },
+  ].filter(Boolean);
 
-  const actionBar = !isActionBarHidden ? (
-    <ActionBar mt={ -6 }>
-      <TokenTransferFilter
-        defaultTypeFilters={ filters.type }
-        onTypeFilterChange={ handleTypeFilterChange }
-        appliedFiltersNum={ numActiveFilters }
-        withAddressFilter
-        onAddressFilterChange={ handleAddressFilterChange }
-        defaultAddressFilter={ filters.filter }
-        isLoading={ isPlaceholderData }
-      />
-      <Flex columnGap={{ base: 2, lg: 6 }} ml={{ base: 2, lg: 'auto' }} _empty={{ display: 'none' }}>
-        <AddressAdvancedFilterLink
-          isLoading={ isPlaceholderData }
-          address={ currentAddress }
-          typeFilter={ filters.type }
-          directionFilter={ filters.filter }
-        />
-        <AddressCsvExportLink
-          address={ currentAddress }
-          params={{ type: 'token-transfers', filterType: 'address', filterValue: filters.filter }}
-          isLoading={ isPlaceholderData }
-        />
-      </Flex>
-      <Pagination ml={{ base: 'auto', lg: 8 }} { ...pagination }/>
-    </ActionBar>
-  ) : null;
+  const rightSlot = (() => {
+    if (isLocalTab) {
+      if (isMobile) {
+        return null;
+      }
+
+      const numActiveFilters = (localQuery.filters.type?.length || 0) + (localQuery.filters.filter ? 1 : 0);
+
+      return (
+        <>
+          <HStack gap={ 2 }>
+            <TokenTransferFilter
+              defaultTypeFilters={ localQuery.filters.type }
+              onTypeFilterChange={ localQuery.onTypeFilterChange }
+              appliedFiltersNum={ numActiveFilters }
+              withAddressFilter
+              onAddressFilterChange={ localQuery.onAddressFilterChange }
+              defaultAddressFilter={ localQuery.filters.filter }
+              isLoading={ localQuery.query.isPlaceholderData }
+            />
+          </HStack>
+          <HStack gap={{ base: 2, lg: 6 }} ml={{ base: 2, lg: 'auto' }} _empty={{ display: 'none' }}>
+            <AddressAdvancedFilterLink
+              isLoading={ localQuery.query.isPlaceholderData }
+              address={ hash }
+              typeFilter={ localQuery.filters.type }
+              directionFilter={ localQuery.filters.filter }
+            />
+            <AddressCsvExportLink
+              address={ hash }
+              params={{ type: 'token-transfers', filterType: 'address', filterValue: localQuery.filters.filter }}
+              isLoading={ localQuery.query.isPlaceholderData }
+            />
+          </HStack>
+          <Pagination ml={{ base: 'auto', lg: 8 }} { ...localQuery.query.pagination }/>
+        </>
+      );
+    }
+
+    if (config.features.crossChainTxs.isEnabled) {
+      if (isMobile) {
+        return null;
+      }
+      return <Pagination ml="auto" { ...crossChainQuery.pagination }/>;
+    }
+
+    return null;
+  })();
+
+  const rightSlotProps = (() => {
+    return {
+      display: 'flex',
+      justifyContent: { base: 'flex-end', lg: 'space-between' },
+      ml: tabs.length > 1 ? { base: 0, lg: 4 } : 0,
+      widthAllocation: 'available' as const,
+    };
+  })();
 
   return (
-    <DataListDisplay
-      isError={ isError }
-      itemsNum={ data?.items?.length }
-      emptyText="There are no token transfers."
-      filterProps={{
-        emptyFilteredText: `Couldn${ apos }t find any token transfer that matches your query.`,
-        hasActiveFilters: Boolean(numActiveFilters),
-      }}
-      actionBar={ actionBar }
-    >
-      { content }
-    </DataListDisplay>
+    <RoutedTabs
+      variant="secondary"
+      size="sm"
+      tabs={ tabs }
+      onValueChange={ handleTabValueChange }
+      rightSlot={ rightSlot }
+      rightSlotProps={ rightSlotProps }
+      listProps={ isMobile ? undefined : TAB_LIST_PROPS }
+      stickyEnabled={ !isMobile }
+    />
   );
 };
 
-export default AddressTokenTransfers;
+export default React.memo(AddressTokenTransfers);

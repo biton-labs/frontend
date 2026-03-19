@@ -1,4 +1,3 @@
-import { Grid } from '@chakra-ui/react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import React from 'react';
@@ -9,6 +8,7 @@ import { route } from 'nextjs-routes';
 
 import type { ResourceError } from 'lib/api/resources';
 import throwOnResourceLoadError from 'lib/errors/throwOnResourceLoadError';
+import { layerLabels } from 'lib/rollups/utils';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import isCustomAppError from 'ui/shared/AppError/isCustomAppError';
@@ -20,6 +20,7 @@ import PrevNext from 'ui/shared/PrevNext';
 
 import OptimisticL2TxnBatchBlobCallData from './OptimisticL2TxnBatchBlobCallData';
 import OptimisticL2TxnBatchBlobCelestia from './OptimisticL2TxnBatchBlobCelestia';
+import OptimisticL2TxnBatchBlobEigenda from './OptimisticL2TxnBatchBlobEigenda';
 import OptimisticL2TxnBatchBlobEip4844 from './OptimisticL2TxnBatchBlobEip4844';
 
 interface Props {
@@ -57,15 +58,12 @@ const OptimisticL2TxnBatchDetails = ({ query }: Props) => {
   const blocksCount = data.l2_end_block_number - data.l2_start_block_number + 1;
 
   return (
-    <Grid
-      columnGap={ 8 }
-      rowGap={{ base: 3, lg: 3 }}
+    <DetailedInfo.Container
       templateColumns={{ base: 'minmax(0, 1fr)', lg: 'minmax(min-content, 200px) minmax(0, 1fr)' }}
-      overflow="hidden"
     >
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Batch ID indicates the length of batches produced by grouping L2 blocks to be proven on L1"
+        hint={ `Batch ID indicates the length of batches produced by grouping ${ layerLabels.current } blocks to be proven on ${ layerLabels.parent }` }
       >
         Batch ID
       </DetailedInfo.ItemLabel>
@@ -85,13 +83,13 @@ const OptimisticL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Date and time at which batch is submitted to L1"
+        hint={ `Date and time at which batch is submitted to ${ layerLabels.parent }` }
       >
         Timestamp
       </DetailedInfo.ItemLabel>
       <DetailedInfo.ItemValue>
         { data.l1_timestamp ?
-          <DetailedInfoTimestamp timestamp={ data.l1_timestamp }isLoading={ isPlaceholderData }/> :
+          <DetailedInfoTimestamp timestamp={ data.l1_timestamp } isLoading={ isPlaceholderData }/> :
           'Undefined'
         }
       </DetailedInfo.ItemValue>
@@ -113,7 +111,7 @@ const OptimisticL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Number of L2 blocks in this batch"
+        hint={ `Number of ${ layerLabels.current } blocks in this batch` }
       >
         Blocks
       </DetailedInfo.ItemLabel>
@@ -133,7 +131,7 @@ const OptimisticL2TxnBatchDetails = ({ query }: Props) => {
         Batch data container
       </DetailedInfo.ItemLabel>
       <DetailedInfo.ItemValue flexDir="column" alignItems="flex-start" rowGap={ 2 }>
-        <OptimisticL2TxnBatchDA container={ data.batch_data_container } isLoading={ isPlaceholderData }/>
+        <OptimisticL2TxnBatchDA container={ data.batch_data_container } isLoading={ isPlaceholderData } mt={{ base: 0, lg: 1 }}/>
         { data.batch_data_container === 'in_blob4844' && data.blobs &&
           <OptimisticL2TxnBatchBlobEip4844 blobs={ data.blobs } isLoading={ isPlaceholderData }/> }
         { data.batch_data_container === 'in_calldata' && (
@@ -145,8 +143,10 @@ const OptimisticL2TxnBatchDetails = ({ query }: Props) => {
         ) }
         { data.batch_data_container === 'in_celestia' && data.blobs &&
           <OptimisticL2TxnBatchBlobCelestia blobs={ data.blobs } isLoading={ isPlaceholderData }/> }
+        { data.batch_data_container === 'in_eigenda' && data.blobs &&
+          <OptimisticL2TxnBatchBlobEigenda blobs={ data.blobs } isLoading={ isPlaceholderData }/> }
       </DetailedInfo.ItemValue>
-    </Grid>
+    </DetailedInfo.Container>
   );
 };
 

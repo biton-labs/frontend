@@ -14,10 +14,24 @@ const rewrites = require('./nextjs/rewrites');
 const moduleExports = {
   transpilePackages: [
     'react-syntax-highlighter',
-    'swagger-client',
-    'swagger-ui-react',
   ],
   reactStrictMode: true,
+  // Turbopack config (Next.js 16 default bundler) – mirrors webpack customizations below
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: [ '@svgr/webpack' ],
+        as: '*.js',
+      },
+    },
+    // Stub Node built-ins only in browser bundles; Node (SSR, instrumentation) keeps real modules
+    resolveAlias: {
+      fs: { browser: './nextjs/empty-module.js' },
+      net: { browser: './nextjs/empty-module.js' },
+      tls: { browser: './nextjs/empty-module.js' },
+    },
+  },
+  // Used when BUNDLE_ANALYZER=true (run: next build --webpack) or for custom webpack tooling
   webpack(config) {
     config.module.rules.push(
       {
@@ -27,6 +41,14 @@ const moduleExports = {
     );
     config.resolve.fallback = { fs: false, net: false, tls: false };
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
+    
+    config.experiments = { ...config.experiments, topLevelAwait: true };
+    // Tell webpack the target supports async/await so it stops warning about top-level await
+    // Top-level await is belong to ES2017 specification that is adopted by all major browsers and Node.js.
+    config.output.environment = {
+      ...config.output.environment,
+      asyncFunction: true,
+    };
 
     return config;
   },
@@ -38,8 +60,14 @@ const moduleExports = {
   redirects,
   headers,
   output: 'standalone',
-  productionBrowserSourceMaps: true,
-  serverExternalPackages: ["@opentelemetry/sdk-node", "@opentelemetry/auto-instrumentations-node"],
+  productionBrowserSourceMaps: false,
+  serverExternalPackages: [
+    '@opentelemetry/sdk-node',
+    '@opentelemetry/auto-instrumentations-node',
+    'pino-pretty',
+    'lokijs',
+    'encoding',
+  ],
   experimental: {
     staleTimes: {
       dynamic: 30,

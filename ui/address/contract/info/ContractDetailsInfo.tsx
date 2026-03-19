@@ -1,16 +1,20 @@
 import { Flex, Grid } from '@chakra-ui/react';
 import React from 'react';
 
+import type { Address } from 'types/api/address';
 import type { SmartContract } from 'types/api/contract';
 
 import config from 'configs/app';
+import { useMultichainContext } from 'lib/contexts/multichain';
 import { CONTRACT_LICENSES } from 'lib/contracts/licenses';
-import dayjs from 'lib/date/dayjs';
 import { Link } from 'toolkit/chakra/link';
 import { getGitHubOwnerAndRepo } from 'ui/contractVerification/utils';
 import ContractCertifiedLabel from 'ui/shared/ContractCertifiedLabel';
+import Time from 'ui/shared/time/Time';
 
 import ContractSecurityAudits from '../audits/ContractSecurityAudits';
+import ContractDetailsInfoCreator from './ContractDetailsInfoCreator';
+import ContractDetailsInfoImplementations from './ContractDetailsInfoImplementations';
 import ContractDetailsInfoItem from './ContractDetailsInfoItem';
 
 const rollupFeature = config.features.rollup;
@@ -18,10 +22,12 @@ const rollupFeature = config.features.rollup;
 interface Props {
   data: SmartContract;
   isLoading: boolean;
-  addressHash: string;
+  addressData: Address;
 }
 
-const ContractDetailsInfo = ({ data, isLoading, addressHash }: Props) => {
+const ContractDetailsInfo = ({ data, isLoading, addressData }: Props) => {
+  const multichainContext = useMultichainContext();
+
   const contractNameWithCertifiedIcon = data ? (
     <Flex alignItems="center">
       { data.name }
@@ -66,7 +72,21 @@ const ContractDetailsInfo = ({ data, isLoading, addressHash }: Props) => {
   const isStylusContract = data.language === 'stylus_rust';
 
   return (
-    <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} rowGap={ 4 } columnGap={ 6 } mb={ 8 }>
+    <Grid templateColumns={{ base: 'auto 1fr', lg: 'auto 1fr auto 1fr' }} rowGap={ 4 } columnGap={ 3 } mb={ 8 }>
+      { addressData.creator_address_hash && addressData.creation_transaction_hash && multichainContext && (
+        <ContractDetailsInfoCreator
+          addressHash={ addressData.creator_address_hash }
+          txHash={ addressData.creation_transaction_hash }
+          creationStatus={ addressData.creation_status }
+          isLoading={ isLoading }
+        />
+      ) }
+      { addressData.implementations && addressData.implementations.length > 0 && multichainContext && !isLoading && (
+        <ContractDetailsInfoImplementations
+          implementations={ addressData.implementations }
+          proxyType={ addressData.proxy_type }
+        />
+      ) }
       { data.name && (
         <ContractDetailsInfoItem
           label="Contract name"
@@ -139,7 +159,7 @@ const ContractDetailsInfo = ({ data, isLoading, addressHash }: Props) => {
           wordBreak="break-word"
           isLoading={ isLoading }
         >
-          { dayjs(data.verified_at).format('llll') }
+          <Time timestamp={ data.verified_at } format="lll_s"/>
         </ContractDetailsInfoItem>
       ) }
       { data.file_path && !isStylusContract && (
@@ -164,7 +184,7 @@ const ContractDetailsInfo = ({ data, isLoading, addressHash }: Props) => {
           label="Security audit"
           isLoading={ isLoading }
         >
-          <ContractSecurityAudits addressHash={ addressHash }/>
+          <ContractSecurityAudits addressHash={ addressData.hash }/>
         </ContractDetailsInfoItem>
       ) }
     </Grid>

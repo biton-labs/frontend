@@ -4,9 +4,26 @@ import React from 'react';
 
 import PageNextJs from 'nextjs/PageNextJs';
 
-const Transactions = dynamic(() => import('ui/pages/Transactions'), { ssr: false });
+import config from 'configs/app';
+
+const Transactions = dynamic(() => {
+  if (config.features.multichain.isEnabled) {
+    return import('ui/multichain/txs/MultichainTxs');
+  }
+
+  if (config.features.zetachain.isEnabled) {
+    return import('ui/pages/TransactionsZetaChain');
+  }
+
+  if (config.features.crossChainTxs.isEnabled) {
+    return import('ui/crossChain/txs/Transactions');
+  }
+
+  return import('ui/pages/Transactions');
+}, { ssr: false });
 
 const Page: NextPage = () => {
+
   return (
     <PageNextJs pathname="/txs">
       <Transactions/>
@@ -16,4 +33,4 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export { base as getServerSideProps } from 'nextjs/getServerSideProps';
+export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';

@@ -2,9 +2,9 @@ import { Flex, Box } from '@chakra-ui/react';
 import React from 'react';
 
 import type { TokenTransfer } from 'types/api/tokenTransfer';
+import type { ClusterChainConfig } from 'types/multichain';
 
-import getCurrencyValue from 'lib/getCurrencyValue';
-import { getTokenTypeName } from 'lib/token/tokenTypes';
+import { getTokenTypeName, isConfidentialTokenType } from 'lib/token/tokenTypes';
 import { Badge } from 'toolkit/chakra/badge';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { TableCell, TableRow } from 'toolkit/chakra/table';
@@ -12,8 +12,11 @@ import AddressFromTo from 'ui/shared/address/AddressFromTo';
 import NftEntity from 'ui/shared/entities/nft/NftEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import TxEntity from 'ui/shared/entities/tx/TxEntity';
+import ChainIcon from 'ui/shared/externalChains/ChainIcon';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
 import { getTokenTransferTypeText } from 'ui/shared/TokenTransfer/helpers';
+import AssetValue from 'ui/shared/value/AssetValue';
+import ConfidentialValue from 'ui/shared/value/ConfidentialValue';
 import TxAdditionalInfo from 'ui/txs/TxAdditionalInfo';
 
 type Props = TokenTransfer & {
@@ -21,6 +24,7 @@ type Props = TokenTransfer & {
   showTxInfo?: boolean;
   enableTimeIncrement?: boolean;
   isLoading?: boolean;
+  chainData?: ClusterChainConfig;
 };
 
 const TokenTransferTableItem = ({
@@ -35,22 +39,27 @@ const TokenTransferTableItem = ({
   timestamp,
   enableTimeIncrement,
   isLoading,
+  chainData,
 }: Props) => {
-  const { usd, valueStr } = total && 'value' in total && total.value !== null ? getCurrencyValue({
-    value: total.value,
-    exchangeRate: token?.exchange_rate,
-    accuracy: 8,
-    accuracyUsd: 2,
-    decimals: total.decimals || '0',
-  }) : { usd: null, valueStr: null };
 
   return (
     <TableRow alignItems="top">
-      { showTxInfo && txHash && (
+      { showTxInfo && (
         <TableCell>
-          <Box my="3px">
-            <TxAdditionalInfo hash={ txHash } isLoading={ isLoading }/>
-          </Box>
+          {
+            txHash ? (
+              <Box my="3px" textAlign="center">
+                <TxAdditionalInfo hash={ txHash } isLoading={ isLoading }/>
+              </Box>
+            ) : (
+              <div/>
+            )
+          }
+        </TableCell>
+      ) }
+      { chainData && (
+        <TableCell>
+          <ChainIcon data={ chainData } isLoading={ isLoading } my={ 1 }/>
         </TableCell>
       ) }
       <TableCell>
@@ -64,7 +73,7 @@ const TokenTransferTableItem = ({
               mt={ 1 }
             />
             <Flex columnGap={ 2 } rowGap={ 2 } mt={ 2 } flexWrap="wrap">
-              <Badge loading={ isLoading }>{ getTokenTypeName(token.type) }</Badge>
+              <Badge loading={ isLoading }>{ getTokenTypeName(token.type, chainData?.app_config) }</Badge>
               <Badge colorPalette="orange" loading={ isLoading }>{ getTokenTransferTypeText(type) }</Badge>
             </Flex>
           </>
@@ -80,16 +89,20 @@ const TokenTransferTableItem = ({
           />
         ) }
       </TableCell>
-      { showTxInfo && txHash && (
+      { showTxInfo && (
         <TableCell>
-          <TxEntity
-            hash={ txHash }
-            isLoading={ isLoading }
-            fontWeight={ 600 }
-            noIcon
-            mt="7px"
-            truncation="constant_long"
-          />
+          { txHash ? (
+            <TxEntity
+              hash={ txHash }
+              isLoading={ isLoading }
+              fontWeight={ 600 }
+              noIcon
+              mt={ 1 }
+              truncation="constant_long"
+            />
+          ) : (
+            <Skeleton loading={ isLoading } mt={ 1 }>-</Skeleton>
+          ) }
           <TimeWithTooltip
             timestamp={ timestamp }
             enableIncrement={ enableTimeIncrement }
@@ -112,15 +125,18 @@ const TokenTransferTableItem = ({
         />
       </TableCell>
       <TableCell isNumeric verticalAlign="top">
-        { valueStr && (
-          <Skeleton loading={ isLoading } display="inline-block" mt="7px" wordBreak="break-all">
-            { valueStr }
-          </Skeleton>
-        ) }
-        { usd && (
-          <Skeleton loading={ isLoading } color="text.secondary" mt="10px" ml="auto" w="min-content">
-            <span>${ usd }</span>
-          </Skeleton>
+        { token && isConfidentialTokenType(token.type) && (!total || !('value' in total) || total.value === null) ? (
+          <ConfidentialValue loading={ isLoading } mt="4px"/>
+        ) : (
+          <AssetValue
+            amount={ total && 'value' in total && total.value !== null ? total.value : null }
+            decimals={ total && 'decimals' in total ? total.decimals || '0' : '0' }
+            exchangeRate={ token?.exchange_rate }
+            loading={ isLoading }
+            layout="vertical"
+            mt="4px"
+            rowGap="10px"
+          />
         ) }
       </TableCell>
     </TableRow>

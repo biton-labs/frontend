@@ -3,7 +3,6 @@ import React from 'react';
 
 import { route } from 'nextjs-routes';
 
-import config from 'configs/app';
 import getErrorCause from 'lib/errors/getErrorCause';
 import getErrorCauseStatusCode from 'lib/errors/getErrorCauseStatusCode';
 import getErrorObjStatusCode from 'lib/errors/getErrorObjStatusCode';
@@ -11,15 +10,13 @@ import getErrorProp from 'lib/errors/getErrorProp';
 import getResourceErrorPayload from 'lib/errors/getResourceErrorPayload';
 import { Button } from 'toolkit/chakra/button';
 import { Link } from 'toolkit/chakra/link';
-import AdBannerContent from 'ui/shared/ad/AdBannerContent';
 
+import AdBanner from '../ad/AdBanner';
 import AppErrorIcon from './AppErrorIcon';
 import AppErrorTitle from './AppErrorTitle';
 import AppErrorBlockConsensus from './custom/AppErrorBlockConsensus';
 import AppErrorTooManyRequests from './custom/AppErrorTooManyRequests';
 import AppErrorTxNotFound from './custom/AppErrorTxNotFound';
-
-const adBannerConfig = config.features.adsBanner;
 
 interface Props {
   className?: string;
@@ -80,13 +77,16 @@ const AppError = ({ error, className }: Props) => {
       case 429: {
         const rateLimits = getErrorProp(error, 'rateLimits');
         const bypassOptions = typeof rateLimits === 'object' && rateLimits && 'bypassOptions' in rateLimits ? rateLimits.bypassOptions : undefined;
-        return <AppErrorTooManyRequests bypassOptions={ typeof bypassOptions === 'string' ? bypassOptions : undefined }/>;
+        const reset = typeof rateLimits === 'object' && rateLimits && 'reset' in rateLimits ? rateLimits.reset : undefined;
+        return (
+          <AppErrorTooManyRequests
+            bypassOptions={ typeof bypassOptions === 'string' ? bypassOptions : undefined }
+            reset={ typeof reset === 'string' ? reset : undefined }/>
+        );
       }
 
       default: {
         const { title, text } = ERROR_TEXTS[String(statusCode)] ?? ERROR_TEXTS[500];
-
-        const adBannerProvider = adBannerConfig.isEnabled ? adBannerConfig.provider : null;
 
         return (
           <>
@@ -104,7 +104,7 @@ const AppError = ({ error, className }: Props) => {
                 Back to home
               </Button>
             </Link>
-            { statusCode === 404 && adBannerProvider && <AdBannerContent mt={ 12 } provider={ adBannerProvider }/> }
+            { statusCode === 404 && <AdBanner mt={ 12 }/> }
           </>
         );
       }

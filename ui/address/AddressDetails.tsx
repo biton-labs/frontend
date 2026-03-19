@@ -23,10 +23,10 @@ import Address3rdPartyWidgets from './Address3rdPartyWidgets';
 import useAddress3rdPartyWidgets from './address3rdPartyWidgets/useAddress3rdPartyWidgets';
 import AddressAlternativeFormat from './details/AddressAlternativeFormat';
 import AddressBalance from './details/AddressBalance';
+import AddressCeloAccount from './details/AddressCeloAccount';
 import AddressImplementations from './details/AddressImplementations';
 import AddressNameInfo from './details/AddressNameInfo';
 import AddressNetWorth from './details/AddressNetWorth';
-import AddressSaveOnGas from './details/AddressSaveOnGas';
 import FilecoinActorTag from './filecoin/FilecoinActorTag';
 import TokenSelect from './tokenSelect/TokenSelect';
 import type { AddressCountersQuery } from './utils/useAddressCountersQuery';
@@ -43,7 +43,8 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
 
   const addressHash = getQueryParamString(router.query.hash);
 
-  const address3rdPartyWidgets = useAddress3rdPartyWidgets(addressQuery.data?.is_contract ? 'contract' : 'eoa', addressQuery.isPlaceholderData);
+  const addressType = addressQuery.data?.is_contract && addressQuery.data?.proxy_type !== 'eip7702' ? 'contract' : 'eoa';
+  const address3rdPartyWidgets = useAddress3rdPartyWidgets(addressType, addressQuery.isPlaceholderData);
 
   const error404Data = React.useMemo(() => ({
     hash: addressHash || '',
@@ -61,6 +62,7 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
     has_token_transfers: true,
     has_validated_blocks: false,
     filecoin: undefined,
+    celo: undefined,
     creator_filecoin_robust_address: null,
     creator_address_hash: null,
   }), [ addressHash ]);
@@ -88,7 +90,12 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
   return (
     <>
       { addressQuery.isDegradedData && <ServiceDegradationWarning isLoading={ isLoading } mb={ 6 }/> }
-      <DetailedInfo.Container templateColumns={{ base: 'minmax(0, 1fr)', lg: 'auto minmax(0, 1fr)' }} >
+      <DetailedInfo.Container>
+
+        { data.celo?.account && (
+          <AddressCeloAccount data={ data.celo.account } isLoading={ isLoading }/>
+        ) }
+
         <AddressAlternativeFormat isLoading={ isLoading } addressHash={ addressHash }/>
 
         { data.filecoin?.id && (
@@ -152,7 +159,7 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
                 noIcon
               />
               <Text whiteSpace="pre"> at txn </Text>
-              <TxEntity hash={ data.creation_transaction_hash } truncation="constant" noIcon noCopy={ false }/>
+              <TxEntity hash={ data.creation_transaction_hash } truncation="constant" noIcon/>
               { data.creation_status && <ContractCreationStatus status={ data.creation_status } ml={{ base: 0, lg: 2 }}/> }
             </DetailedInfo.ItemValue>
           </>
@@ -187,7 +194,7 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
             >
               Net worth
             </DetailedInfo.ItemLabel>
-            <DetailedInfo.ItemValue alignSelf="center" py={ 0 }>
+            <DetailedInfo.ItemValue multiRow>
               <AddressNetWorth addressData={ addressQuery.data } addressHash={ addressHash } isLoading={ isLoading }/>
             </DetailedInfo.ItemValue>
           </>
@@ -244,7 +251,7 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
             >
               Gas used
             </DetailedInfo.ItemLabel>
-            <DetailedInfo.ItemValue>
+            <DetailedInfo.ItemValue multiRow>
               { addressQuery.data ? (
                 <AddressCounterItem
                   prop="gas_usage_count"
@@ -255,12 +262,6 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
                 />
               ) :
                 0 }
-              { !countersQuery.isPlaceholderData && countersQuery.data?.gas_usage_count && (
-                <AddressSaveOnGas
-                  gasUsed={ countersQuery.data.gas_usage_count }
-                  address={ data.hash }
-                />
-              ) }
             </DetailedInfo.ItemValue>
           </>
         ) }
@@ -315,9 +316,9 @@ const AddressDetails = ({ addressQuery, countersQuery, isLoading }: Props) => {
             >
               Widgets
             </DetailedInfo.ItemLabel>
-            <DetailedInfo.ItemValue pl={{ base: 0, sm: 7, lg: 0 }}>
+            <DetailedInfo.ItemValue>
               <Address3rdPartyWidgets
-                addressType={ data.is_contract ? 'contract' : 'eoa' }
+                addressType={ addressType }
                 isLoading={ addressQuery.isPlaceholderData }
               />
             </DetailedInfo.ItemValue>

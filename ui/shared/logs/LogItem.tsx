@@ -2,6 +2,7 @@ import { Grid, GridItem } from '@chakra-ui/react';
 import React from 'react';
 
 import type { Log } from 'types/api/log';
+import type { ClusterChainConfig } from 'types/multichain';
 
 import { route } from 'nextjs-routes';
 
@@ -10,6 +11,7 @@ import { Alert } from 'toolkit/chakra/alert';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { space } from 'toolkit/utils/htmlEntities';
+import DetailedInfoTimestamp from 'ui/shared/DetailedInfo/DetailedInfoTimestamp';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import TxEntity from 'ui/shared/entities/tx/TxEntity';
 import LogDecodedInputData from 'ui/shared/logs/LogDecodedInputData';
@@ -23,6 +25,7 @@ type Props = Log & {
   type: 'address' | 'transaction';
   isLoading?: boolean;
   defaultDataType?: DataType;
+  chainData?: ClusterChainConfig;
 };
 
 const RowHeader = ({ children, isLoading }: { children: React.ReactNode; isLoading?: boolean }) => (
@@ -31,7 +34,19 @@ const RowHeader = ({ children, isLoading }: { children: React.ReactNode; isLoadi
   </GridItem>
 );
 
-const LogItem = ({ address, index, topics, data, decoded, type, transaction_hash: txHash, isLoading, defaultDataType }: Props) => {
+const LogItem = ({
+  address,
+  index,
+  topics,
+  data,
+  decoded,
+  type,
+  transaction_hash: txHash,
+  block_timestamp: blockTimestamp,
+  isLoading,
+  defaultDataType,
+  chainData,
+}: Props) => {
 
   const hasTxInfo = type === 'address' && txHash;
 
@@ -64,13 +79,14 @@ const LogItem = ({ address, index, topics, data, decoded, type, transaction_hash
             isLoading={ isLoading }
             mr={{ base: 9, lg: 4 }}
             w="100%"
+            chain={ chainData }
+            noCopy
           />
         ) : (
           <AddressEntity
             address={ address }
             isLoading={ isLoading }
             mr={{ base: 9, lg: 4 }}
-            w="100%"
           />
         ) }
         { /* api doesn't have find topic feature yet */ }
@@ -89,6 +105,14 @@ const LogItem = ({ address, index, topics, data, decoded, type, transaction_hash
           { index }
         </LogIndex>
       </GridItem>
+      { hasTxInfo && blockTimestamp ? (
+        <>
+          <RowHeader isLoading={ isLoading }>Timestamp</RowHeader>
+          <GridItem>
+            <DetailedInfoTimestamp timestamp={ blockTimestamp } isLoading={ isLoading }/>
+          </GridItem>
+        </>
+      ) : null }
       { decoded && (
         <>
           <RowHeader isLoading={ isLoading }>Decode input data</RowHeader>

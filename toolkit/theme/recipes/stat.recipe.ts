@@ -14,22 +14,22 @@ export const recipe = defineSlotRecipe({
       display: 'inline-flex',
       gap: '1.5',
       alignItems: 'center',
-      color: 'text',
+      color: 'text.primary',
       textStyle: 'sm',
     },
     helpText: {
-      color: 'text',
+      color: 'text.primary',
       textStyle: 'xs',
     },
     valueUnit: {
-      color: 'text',
+      color: 'text.primary',
       textStyle: 'xs',
       fontWeight: 'initial',
       letterSpacing: 'initial',
     },
     valueText: {
       verticalAlign: 'baseline',
-      fontWeight: 'semibold',
+      fontWeight: '500',
       letterSpacing: 'normal',
       fontFeatureSettings: 'initial',
       fontVariantNumeric: 'initial',
@@ -95,7 +95,7 @@ export const recipe = defineSlotRecipe({
   },
 
   defaultVariants: {
-    size: 'md',
+    size: 'sm',
     orientation: 'horizontal',
   },
 });

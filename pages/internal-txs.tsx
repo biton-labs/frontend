@@ -4,7 +4,15 @@ import React from 'react';
 
 import PageNextJs from 'nextjs/PageNextJs';
 
-const InternalTxs = dynamic(() => import('ui/pages/InternalTxs'), { ssr: false });
+import config from 'configs/app';
+
+const InternalTxs = dynamic(() => {
+  if (config.features.multichain.isEnabled) {
+    return import('ui/multichain/internalTxs/MultichainInternalTxs');
+  }
+
+  return import('ui/pages/InternalTxs');
+}, { ssr: false });
 
 const Page: NextPage = () => {
   return (
@@ -16,4 +24,4 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export { base as getServerSideProps } from 'nextjs/getServerSideProps';
+export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';

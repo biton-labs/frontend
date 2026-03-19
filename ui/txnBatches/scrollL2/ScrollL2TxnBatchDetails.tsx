@@ -1,4 +1,3 @@
-import { Grid } from '@chakra-ui/react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import React from 'react';
@@ -9,6 +8,7 @@ import { route } from 'nextjs-routes';
 
 import type { ResourceError } from 'lib/api/resources';
 import throwOnResourceLoadError from 'lib/errors/throwOnResourceLoadError';
+import { layerLabels } from 'lib/rollups/utils';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import isCustomAppError from 'ui/shared/AppError/isCustomAppError';
@@ -20,7 +20,6 @@ import BlockEntityL1 from 'ui/shared/entities/block/BlockEntityL1';
 import TxEntityL1 from 'ui/shared/entities/tx/TxEntityL1';
 import PrevNext from 'ui/shared/PrevNext';
 import ScrollL2TxnBatchStatus from 'ui/shared/statusTag/ScrollL2TxnBatchStatus';
-
 interface Props {
   query: UseQueryResult<ScrollL2TxnBatch, ResourceError>;
 }
@@ -56,15 +55,12 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
   const blocksCount = data.end_block_number - data.start_block_number + 1;
 
   return (
-    <Grid
-      columnGap={ 8 }
-      rowGap={{ base: 3, lg: 3 }}
+    <DetailedInfo.Container
       templateColumns={{ base: 'minmax(0, 1fr)', lg: 'minmax(min-content, 200px) minmax(0, 1fr)' }}
-      overflow="hidden"
     >
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Batch number indicates the length of batches produced by grouping L2 blocks to be proven on L1"
+        hint={ `Batch number indicates the length of batches produced by grouping ${ layerLabels.current } blocks to be proven on ${ layerLabels.parent }` }
       >
         Txn batch number
       </DetailedInfo.ItemLabel>
@@ -104,13 +100,13 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Date and time at which batch is finalized to L1"
+        hint={ `Date and time at which batch is finalized to ${ layerLabels.parent }` }
       >
         Finalized timestamp
       </DetailedInfo.ItemLabel>
       <DetailedInfo.ItemValue>
         { data.confirmation_transaction.timestamp ?
-          <DetailedInfoTimestamp timestamp={ data.confirmation_transaction.timestamp }isLoading={ isPlaceholderData }/> :
+          <DetailedInfoTimestamp timestamp={ data.confirmation_transaction.timestamp } isLoading={ isPlaceholderData }/> :
           <Skeleton loading={ isPlaceholderData } display="inline-block">Pending</Skeleton>
         }
       </DetailedInfo.ItemValue>
@@ -133,7 +129,7 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Number of L2 blocks in this batch"
+        hint={ `Number of ${ layerLabels.current } blocks in this batch` }
       >
         Blocks
       </DetailedInfo.ItemLabel>
@@ -145,34 +141,36 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Date and time at which batch is committed to L1"
+        hint={ `Date and time at which batch is committed to ${ layerLabels.parent }` }
       >
         Committed timestamp
       </DetailedInfo.ItemLabel>
       <DetailedInfo.ItemValue>
         { data.commitment_transaction.timestamp ?
-          <DetailedInfoTimestamp timestamp={ data.commitment_transaction.timestamp }isLoading={ isPlaceholderData }/> :
+          <DetailedInfoTimestamp timestamp={ data.commitment_transaction.timestamp } isLoading={ isPlaceholderData }/> :
           <Skeleton loading={ isPlaceholderData } display="inline-block">Pending</Skeleton>
         }
       </DetailedInfo.ItemValue>
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Hash of L1 transaction this batch was committed in"
+        hint={ `Hash of ${ layerLabels.parent } transaction this batch was committed in` }
       >
         Committed transaction hash
       </DetailedInfo.ItemLabel>
-      <DetailedInfo.ItemValue>
+      <DetailedInfo.ItemValue alignSelf="flex-start">
         <TxEntityL1
           isLoading={ isPlaceholderData }
           hash={ data.commitment_transaction.hash }
           maxW="100%"
+          noCopy
+
         />
       </DetailedInfo.ItemValue>
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="L1 block that includes transaction with this batch commitment"
+        hint={ `${ layerLabels.parent } block that includes transaction with this batch commitment` }
       >
         Committed block
       </DetailedInfo.ItemLabel>
@@ -185,23 +183,24 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="Hash of L1 transaction this batch was finalized in"
+        hint={ `Hash of ${ layerLabels.parent } transaction this batch was finalized in` }
       >
         Finalized transaction hash
       </DetailedInfo.ItemLabel>
-      <DetailedInfo.ItemValue>
+      <DetailedInfo.ItemValue alignSelf="flex-start">
         { data.confirmation_transaction.hash ? (
           <TxEntityL1
             isLoading={ isPlaceholderData }
             hash={ data.confirmation_transaction.hash }
             maxW="100%"
+            noCopy
           />
         ) : <Skeleton loading={ isPlaceholderData } display="inline-block">Pending</Skeleton> }
       </DetailedInfo.ItemValue>
 
       <DetailedInfo.ItemLabel
         isLoading={ isPlaceholderData }
-        hint="L1 block that includes transaction with this batch finalization data"
+        hint={ `${ layerLabels.parent } block that includes transaction with this batch finalization data` }
       >
         Finalized block
       </DetailedInfo.ItemLabel>
@@ -213,7 +212,7 @@ const ScrollL2TxnBatchDetails = ({ query }: Props) => {
           />
         ) : <Skeleton loading={ isPlaceholderData } display="inline-block">Pending</Skeleton> }
       </DetailedInfo.ItemValue>
-    </Grid>
+    </DetailedInfo.Container>
   );
 };
 

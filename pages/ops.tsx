@@ -4,7 +4,15 @@ import React from 'react';
 
 import PageNextJs from 'nextjs/PageNextJs';
 
-const UserOps = dynamic(() => import('ui/pages/UserOps'), { ssr: false });
+import config from 'configs/app';
+
+const UserOps = dynamic(() => {
+  if (config.features.multichain.isEnabled) {
+    return import('ui/multichain/userOps/MultichainUserOps');
+  }
+
+  return import('ui/pages/UserOps');
+}, { ssr: false });
 
 const Page: NextPage = () => {
   return (
@@ -16,4 +24,4 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export { userOps as getServerSideProps } from 'nextjs/getServerSideProps';
+export { userOps as getServerSideProps } from 'nextjs/getServerSideProps/main';
