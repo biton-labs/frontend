@@ -22,7 +22,8 @@ const AdBanner = ({ className, isLoading, platform }: Props) => {
 
   const hasAdblockCookie = cookies.get(cookies.NAMES.ADBLOCK_DETECTED, useAppContext().cookies);
 
-  if (!feature.isEnabled || hasAdblockCookie === 'true' || !provider) {
+  // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
+  if (true || !feature.isEnabled || hasAdblockCookie === 'true' || !provider) {
     return null;
   }
 
