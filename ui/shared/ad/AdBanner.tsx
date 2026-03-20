@@ -31,7 +31,7 @@ const AdBanner = ({ className, isLoading, platform }: Props) => {
     <AdBannerContent
       className={ className }
       isLoading={ isLoading }
-      provider={ provider }
+      provider={ provider! }
       platform={ platform }
     />
   );
