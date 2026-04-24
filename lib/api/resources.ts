@@ -10,7 +10,7 @@ import { GENERAL_API_RESOURCES } from './services/general';
 import type { GeneralApiResourceName, GeneralApiResourcePayload, GeneralApiPaginationFilters, GeneralApiPaginationSorting } from './services/general';
 import type { MetadataApiResourceName, MetadataApiResourcePayload } from './services/metadata';
 import { METADATA_API_RESOURCES } from './services/metadata';
-import type { MultichainApiResourceName, MultichainApiResourcePayload } from './services/multichain';
+import type { MultichainApiPaginationFilters, MultichainApiResourceName, MultichainApiResourcePayload } from './services/multichain';
 import { MULTICHAIN_API_RESOURCES } from './services/multichain';
 import type { RewardsApiResourceName, RewardsApiResourcePayload } from './services/rewards';
 import { REWARDS_API_RESOURCES } from './services/rewards';
@@ -22,9 +22,12 @@ import type {
   TacOperationLifecycleApiResourceName,
   TacOperationLifecycleApiResourcePayload,
 } from './services/tac-operation-lifecycle';
+import { USER_OPS_API_RESOURCES } from './services/userOps';
 import type { IsPaginated } from './services/utils';
 import { VISUALIZE_API_RESOURCES } from './services/visualize';
 import type { VisualizeApiResourceName, VisualizeApiResourcePayload } from './services/visualize';
+import { ZETA_CHAIN_API_RESOURCES } from './services/zetaChain';
+import type { ZetaChainApiPaginationFilters, ZetaChainApiResourceName, ZetaChainApiResourcePayload } from './services/zetaChain';
 
 export const RESOURCES = {
   admin: ADMIN_API_RESOURCES,
@@ -36,7 +39,19 @@ export const RESOURCES = {
   rewards: REWARDS_API_RESOURCES,
   stats: STATS_API_RESOURCES,
   tac: TAC_OPERATION_LIFECYCLE_API_RESOURCES,
+  userOps: USER_OPS_API_RESOURCES,
   visualize: VISUALIZE_API_RESOURCES,
+  zetachain: ZETA_CHAIN_API_RESOURCES,
+  // external API resources
+  // there is no type definition for them, use valibot to parse the response
+  external: {
+    gas_hawk_saving_potential: {
+      path: '/api/v2/gas-hawk-saving-potential',
+    },
+    safe_transaction_api: {
+      path: '',
+    },
+  },
 } satisfies Record<ApiName, Record<string, ApiResource>>;
 
 export const resourceKey = (x: ResourceName) => x;
@@ -59,6 +74,7 @@ R extends RewardsApiResourceName ? RewardsApiResourcePayload<R> :
 R extends StatsApiResourceName ? StatsApiResourcePayload<R> :
 R extends TacOperationLifecycleApiResourceName ? TacOperationLifecycleApiResourcePayload<R> :
 R extends VisualizeApiResourceName ? VisualizeApiResourcePayload<R> :
+R extends ZetaChainApiResourceName ? ZetaChainApiResourcePayload<R> :
 never;
 /* eslint-enable @stylistic/indent */
 
@@ -89,7 +105,9 @@ export type PaginationFilters<R extends ResourceName> =
 R extends BensApiResourceName ? BensApiPaginationFilters<R> :
 R extends GeneralApiResourceName ? GeneralApiPaginationFilters<R> :
 R extends ContractInfoApiResourceName ? ContractInfoApiPaginationFilters<R> :
+R extends MultichainApiResourceName ? MultichainApiPaginationFilters<R> :
 R extends TacOperationLifecycleApiResourceName ? TacOperationLifecycleApiPaginationFilters<R> :
+R extends ZetaChainApiResourceName ? ZetaChainApiPaginationFilters<R> :
 never;
 /* eslint-enable @stylistic/indent */
 

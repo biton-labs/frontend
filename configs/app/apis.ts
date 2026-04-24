@@ -113,6 +113,7 @@ const multichainApi = (() => {
     return Object.freeze({
       endpoint: apiHost,
       socketEndpoint: `wss://${ url.host }`,
+      basePath: stripTrailingSlash(getEnvValue('NEXT_PUBLIC_MULTICHAIN_AGGREGATOR_BASE_PATH') || ''),
     });
   } catch (error) {
     return;
@@ -143,6 +144,17 @@ const tacApi = (() => {
   });
 })();
 
+const userOpsApi = (() => {
+  const apiHost = getEnvValue('NEXT_PUBLIC_USER_OPS_INDEXER_API_HOST');
+  if (!apiHost) {
+    return;
+  }
+
+  return Object.freeze({
+    endpoint: apiHost,
+  });
+})();
+
 const visualizeApi = (() => {
   const apiHost = getEnvValue('NEXT_PUBLIC_VISUALIZE_API_HOST');
   if (!apiHost) {
@@ -153,6 +165,24 @@ const visualizeApi = (() => {
     endpoint: apiHost,
     basePath: stripTrailingSlash(getEnvValue('NEXT_PUBLIC_VISUALIZE_API_BASE_PATH') || ''),
   });
+})();
+
+const zetachainApi = (() => {
+  const apiHost = getEnvValue('NEXT_PUBLIC_ZETACHAIN_SERVICE_API_HOST');
+  if (!apiHost) {
+    return;
+  }
+
+  try {
+    const url = new URL(apiHost);
+
+    return Object.freeze({
+      endpoint: apiHost,
+      socketEndpoint: `wss://${ url.host }/socket`,
+    });
+  } catch (error) {
+    return;
+  }
 })();
 
 export type Apis = {
@@ -169,7 +199,9 @@ const apis: Apis = Object.freeze({
   rewards: rewardsApi,
   stats: statsApi,
   tac: tacApi,
+  userOps: userOpsApi,
   visualize: visualizeApi,
+  zetachain: zetachainApi,
 });
 
 export default apis;

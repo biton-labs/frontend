@@ -340,12 +340,27 @@ const ETHERSCAN_URLS = [
     source: '/txsEnqueued',
     destination: '/deposits',
   },
+
+  // CROSS CHAIN TRANSACTIONS
+  {
+    source: '/cc/txs',
+    destination: '/txs?tab=cctx',
+  },
+];
+
+const DEPRECATED_ROUTES = [
+  {
+    source: '/graphiql',
+    destination: '/api-docs?tab=graphql_api',
+    permanent: false,
+  },
 ];
 
 async function redirects() {
   return [
     ...OLD_UI_URLS.map((item) => ({ ...item, permanent: false })),
     ...ETHERSCAN_URLS.map((item) => ({ ...item, permanent: true })),
+    ...DEPRECATED_ROUTES,
   ];
 }
 
