@@ -25,7 +25,7 @@ import Address3rdPartyWidgets from 'ui/address/Address3rdPartyWidgets';
 import useAddress3rdPartyWidgets from 'ui/address/address3rdPartyWidgets/useAddress3rdPartyWidgets';
 import AddressAccountHistory from 'ui/address/AddressAccountHistory';
 import AddressBlocksValidated from 'ui/address/AddressBlocksValidated';
-import AddressCoinBalance from 'ui/address/AddressCoinBalance';
+// import AddressCoinBalance from 'ui/address/AddressCoinBalance';
 import AddressContract from 'ui/address/AddressContract';
 import AddressDeposits from 'ui/address/AddressDeposits';
 import AddressDetails from 'ui/address/AddressDetails';
@@ -266,11 +266,11 @@ const AddressPageContent = () => {
         count: addressTabsCountersQuery.data?.celo_election_rewards_count,
         component: <AddressEpochRewards shouldRender={ !isTabsLoading } isQueryEnabled={ areQueriesEnabled }/>,
       } : undefined,
-      {
-        id: 'coin_balance_history',
-        title: 'Coin balance history',
-        component: <AddressCoinBalance shouldRender={ !isTabsLoading } isQueryEnabled={ areQueriesEnabled }/>,
-      },
+      // {
+      //   id: 'coin_balance_history',
+      //   title: 'Coin balance history',
+      //   component: <AddressCoinBalance shouldRender={ !isTabsLoading } isQueryEnabled={ areQueriesEnabled }/>,
+      // },
       addressTabsCountersQuery.data?.validations_count ?
         {
           id: 'blocks_validated',

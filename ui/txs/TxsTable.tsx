@@ -83,6 +83,7 @@ const TxsTable = ({
                 <TableColumnHeader width="18%">Block</TableColumnHeader>
               )
             ) }
+            <TableColumnHeader width="120px">Age</TableColumnHeader>
             <TableColumnHeader width="224px">From/To</TableColumnHeader>
             { !config.UI.views.tx.hiddenFields?.value && (
               onSortToggle ? (

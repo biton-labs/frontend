@@ -7,7 +7,7 @@ import type { CustomLinksGroup } from 'types/footerLinks';
 
 import config from 'configs/app';
 import type { ResourceError } from 'lib/api/resources';
-import useApiQuery from 'lib/api/useApiQuery';
+// import useApiQuery from 'lib/api/useApiQuery';
 import useFetch from 'lib/hooks/useFetch';
 // import useIssueUrl from 'lib/hooks/useIssueUrl';
 import { Link } from 'toolkit/chakra/link';
@@ -19,7 +19,7 @@ import NetworkAddToWallet from 'ui/shared/NetworkAddToWallet';
 
 import FooterLinkItem from './FooterLinkItem';
 import IntTxsIndexingStatus from './IntTxsIndexingStatus';
-import getApiVersionUrl from './utils/getApiVersionUrl';
+// import getApiVersionUrl from './utils/getApiVersionUrl';
 
 const MAX_LINKS_COLUMNS = 4;
 
@@ -28,13 +28,13 @@ const MAX_LINKS_COLUMNS = 4;
 
 const Footer = () => {
 
-  const { data: backendVersionData } = useApiQuery('general:config_backend_version', {
-    queryOptions: {
-      staleTime: Infinity,
-      enabled: !config.features.opSuperchain.isEnabled,
-    },
-  });
-  const apiVersionUrl = getApiVersionUrl(backendVersionData?.backend_version);
+  // const { data: backendVersionData } = useApiQuery('general:config_backend_version', {
+  //   queryOptions: {
+  //     staleTime: Infinity,
+  //     enabled: !config.features.opSuperchain.isEnabled,
+  //   },
+  // });
+  // const apiVersionUrl = getApiVersionUrl(backendVersionData?.backend_version);
   // const issueUrl = useIssueUrl(backendVersionData?.backend_version);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,23 +77,23 @@ const Footer = () => {
     // },
   ];
 
-  const handleLinkClick = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-  }, []);
+  // const handleLinkClick = React.useCallback((e: React.MouseEvent) => {
+  //   e.preventDefault();
+  // }, []);
 
-  const frontendLink = (() => {
-    if (config.UI.footer.frontendVersion) {
-      // {FRONT_VERSION_URL}
-      return <Link href="#" onClick={ handleLinkClick }>{ config.UI.footer.frontendVersion }</Link>;
-    }
+  // const frontendLink = (() => {
+  //   if (config.UI.footer.frontendVersion) {
+  //     // {FRONT_VERSION_URL}
+  //     return <Link href="#" onClick={ handleLinkClick }>{ config.UI.footer.frontendVersion }</Link>;
+  //   }
 
-    if (config.UI.footer.frontendCommit) {
-      // {FRONT_COMMIT_URL}
-      return <Link href="#" onClick={ handleLinkClick }>{ config.UI.footer.frontendCommit }</Link>;
-    }
+  //   if (config.UI.footer.frontendCommit) {
+  //     // {FRONT_COMMIT_URL}
+  //     return <Link href="#" onClick={ handleLinkClick }>{ config.UI.footer.frontendCommit }</Link>;
+  //   }
 
-    return null;
-  })();
+  //   return null;
+  // })();
 
   const fetch = useFetch();
 
@@ -123,7 +123,7 @@ const Footer = () => {
     );
   }, []);
 
-  const renderProjectInfo = React.useCallback((gridArea?: GridProps['gridArea']) => {
+  const renderProjectInfo = (gridArea?: GridProps['gridArea']) => {
     const logoColor = { base: 'blue.600', _dark: 'white' };
 
     return (
@@ -142,7 +142,7 @@ const Footer = () => {
           Blockchain explorer for Ethereum Networks.
         </Text>
         <Box mt={ 6 } alignItems="start" textStyle="xs">
-          { apiVersionUrl && (
+          { /* { apiVersionUrl && (
             <Text>
               Backend: <Link href={ apiVersionUrl } target="_blank">{ backendVersionData?.backend_version }</Link>
             </Text>
@@ -151,14 +151,15 @@ const Footer = () => {
             <Text>
               Frontend: { frontendLink }
             </Text>
-          ) }
+          ) } */ }
           { /* <Text>
             Copyright {copy} Blockscout Limited 2023-{(new Date()).getFullYear()}
           </Text> */ }
         </Box>
       </Box>
     );
-  }, [ apiVersionUrl, backendVersionData?.backend_version, frontendLink ]);
+  };
+  // , [ apiVersionUrl, backendVersionData?.backend_version, frontendLink ]);
 
   const containerProps: HTMLChakraProps<'div'> = {
     as: 'footer',

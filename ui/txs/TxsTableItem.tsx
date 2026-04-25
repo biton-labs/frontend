@@ -54,12 +54,12 @@ const TxsTableItem = ({ tx, showBlockInfo, currentAddress, enableTimeIncrement, 
             maxW="100%"
             truncation="constant_long"
           />
-          <TimeWithTooltip
+          { /* <TimeWithTooltip
             timestamp={ tx.timestamp }
             enableIncrement={ enableTimeIncrement }
             isLoading={ isLoading }
             color="text.secondary"
-          />
+          /> */ }
         </VStack>
       </TableCell>
       <TableCell>
@@ -97,6 +97,14 @@ const TxsTableItem = ({ tx, showBlockInfo, currentAddress, enableTimeIncrement, 
           ) }
         </TableCell>
       ) }
+      <TableCell>
+        <TimeWithTooltip
+          timestamp={ tx.timestamp }
+          enableIncrement={ enableTimeIncrement }
+          isLoading={ isLoading }
+          color="text.secondary"
+        />
+      </TableCell>
       <TableCell>
         <AddressFromTo
           from={ tx.from }
